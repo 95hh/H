@@ -15,8 +15,8 @@
         body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; }
         .app-container { max-width: 600px; margin: 0 auto; padding-bottom: 64px; }
         .card-shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02); }
-        .tab-button.active { border-bottom: 3px solid #34d399; color: #059669; } /* Soft Green Accent */
-        .guide-highlight { padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; }
+        /* 統一 Tab 活躍顏色 */
+        .tab-button.active { border-bottom: 3px solid #34d399; color: #059669; } 
 
         /* 響應式：手機優先的固定底部導航 */
         @media (min-width: 640px) {
@@ -46,12 +46,17 @@
             <i data-lucide="plane" class="w-5 h-5 mb-0.5"></i>
             <span>航班住宿</span>
         </button>
+        <button id="tab-packing" class="tab-button flex flex-col items-center justify-center text-sm text-gray-500 hover:text-gray-800 transition duration-150 p-2">
+            <i data-lucide="baggage-claim" class="w-5 h-5 mb-0.5"></i>
+            <span>行李清單</span>
+        </button>
     </footer>
 </div>
 
 <script>
     // --- 數據結構 (從 PDF 和網頁搜索結果整合) ---
     const ITINERARY_DATA = [
+        // 行程數據保持不變，略...
         { date: '12/26 (五)', events: [
             { type: 'traffic', name: '前往桃園機場', location: '台灣桃園國際機場 T2', note: 'MF888 11:10', guide: '' },
             { type: 'traffic', name: '抵達廈門高崎', location: '廈門高崎機場 (XMN)', note: '轉機停留', guide: '請注意國際轉國內的指示牌。' },
@@ -119,7 +124,6 @@
             { name: "亞布力森林溫泉酒店", location: "尚志亚布力旅游度假區亚布力南站旁", duration: "12/28" },
             { name: "海林雪鄉添瑞民宿", location: "海林雪韵大街西07-2号", duration: "12/29" }
         ],
-        // *** 此處已更新為無肉伴手禮清單 ***
         souvenirs: `
             <p class="text-red-600 font-bold mb-3 border-b-2 border-red-200 pb-2">🚨 台灣海關嚴禁肉製品入境 (包含紅腸)，請勿攜帶！</p>
             <p class="text-base font-semibold text-gray-800 mb-2">✅ 推薦無肉必買伴手禮：</p>
@@ -131,8 +135,16 @@
             </ul>
             <p class="text-xs text-gray-500 mt-3 italic">購買地點：中央大街俄羅斯食品店、當地大型超市。</p>
         `
-        // ********************************
     };
+
+    // PDF 提供的行李清單數據
+    const PACKING_DATA = [
+        { category: '極地保暖衣物', items: ['發熱衣褲', '防風衣褲', '保暖衣褲', '輕薄睡衣', '個人內衣褲', '羊毛襪', '普通厚襪', '雪地靴', '防滑防水運動鞋', '毛帽(可蓋住耳朵)', '圍巾', '防風手套', '暖暖包', '加熱鞋墊', '保暖口罩'] },
+        { category: '個人衛生與護理', items: ['保濕護膚品(東北很乾)', '化妝品', '隱形眼鏡+墨鏡', '防曬霜', '個人藥品'] },
+        { category: '證件類', items: ['護照', '台胞證'] },
+        { category: '電子用品', items: ['行充(含3C標示)', '充電器', '轉接頭'] },
+    ];
+
 
     // --- 工具函數 ---
 
@@ -150,7 +162,6 @@
 
     // 打開地圖導航
     function openInMaps(location) {
-        // 嘗試打開 Google Maps 進行導航
         const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
         window.open(url, '_blank');
     }
@@ -160,6 +171,7 @@
         const container = document.getElementById('content-container');
         const buttons = document.querySelectorAll('.tab-button');
 
+        // 更新按鈕狀態
         buttons.forEach(btn => btn.classList.remove('active', 'text-gray-800'));
         buttons.forEach(btn => btn.classList.add('text-gray-500', 'hover:text-gray-800'));
 
@@ -169,11 +181,15 @@
 
         container.innerHTML = ''; // 清空內容
 
+        // 渲染對應的內容
         if (tabId === 'tab-itinerary') {
             container.innerHTML = renderItinerary();
         } else if (tabId === 'tab-info') {
             container.innerHTML = renderInfo();
+        } else if (tabId === 'tab-packing') {
+            container.innerHTML = renderPackingList();
         }
+        
         // 重新渲染 Lucide 圖標
         lucide.createIcons();
 
@@ -181,7 +197,7 @@
         document.getElementById('app').scrollTo(0, 0);
     }
 
-    // --- 渲染函數 ---
+    // --- 渲染函數：行程概覽 (不變) ---
 
     function renderItinerary() {
         let html = '';
@@ -239,6 +255,9 @@
         return html;
     }
 
+
+    // --- 渲染函數：航班住宿 (不變) ---
+
     function renderInfo() {
         let html = `
             <div class="space-y-8">
@@ -291,7 +310,7 @@
                     `).join('')}
                 </div>
 
-                <!-- 必買伴手禮 (額外導遊資訊區塊) -->
+                <!-- 必買伴手禮 (額外導遊資訊區塊 - 已更新為無肉清單) -->
                 <div class="p-4 rounded-lg border border-gray-200 card-shadow bg-white mb-8">
                     <h2 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4 flex items-center">
                         <i data-lucide="gift" class="w-5 h-5 mr-2 text-pink-500"></i> 必買伴手禮 (導遊建議)
@@ -303,6 +322,40 @@
         return html;
     }
 
+    // --- 新增渲染函數：行李清單 ---
+    function renderPackingList() {
+        let html = `
+            <div class="p-4 space-y-6">
+                <h2 class="text-xl font-bold text-gray-800 border-b pb-2 flex items-center">
+                    <i data-lucide="baggage-claim" class="w-5 h-5 mr-2 text-yellow-600"></i> 極寒行李清單
+                </h2>
+                <div class="p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-700">
+                    <p class="font-semibold mb-1">⚠️ 零下氣溫必備：</p>
+                    <p>保暖衣物和暖暖包是關鍵！請準備能層層疊穿的衣物，戶外活動建議使用防水材質。</p>
+                </div>
+        `;
+
+        PACKING_DATA.forEach(group => {
+            html += `
+                <div class="p-4 rounded-lg border border-gray-200 card-shadow bg-white">
+                    <h3 class="text-lg font-bold text-gray-700 mb-3 border-b-2 border-green-100 pb-1">${group.category}</h3>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        ${group.items.map(item => `
+                            <div class="flex items-center text-gray-700">
+                                <i data-lucide="check-square" class="w-4 h-4 mr-2 text-green-500 flex-shrink-0"></i>
+                                <span>${item}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        return html;
+    }
+
+
     // --- 初始化 App ---
     document.addEventListener('DOMContentLoaded', () => {
         // 初始渲染行程頁面
@@ -311,6 +364,7 @@
         // 綁定底部導航按鈕事件
         document.getElementById('tab-itinerary').addEventListener('click', () => switchTab('tab-itinerary'));
         document.getElementById('tab-info').addEventListener('click', () => switchTab('tab-info'));
+        document.getElementById('tab-packing').addEventListener('click', () => switchTab('tab-packing')); // 新增綁定
 
         // 確保 Lucide 圖標在第一次渲染後被創建
         lucide.createIcons();
