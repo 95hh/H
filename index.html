@@ -3,38 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Pages 測試成功</title>
-    <!-- 使用 Tailwind CSS 確保樣式清晰且適用於手機 -->
+    <title>哈爾濱冰雪之旅 2025/12</title>
+    <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 使用 Inter 字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons for Native App feel -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* 確保頁面佔滿整個視窗高度 */
-        html, body {
-            height: 100%;
-            margin: 0;
-            font-family: 'Inter', sans-serif;
+        /* 日式極簡：乾淨的字體與足夠的留白 */
+        body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; }
+        .app-container { max-width: 600px; margin: 0 auto; padding-bottom: 64px; }
+        .card-shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02); }
+        .tab-button.active { border-bottom: 3px solid #34d399; color: #059669; } /* Soft Green Accent */
+        .guide-highlight { padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; }
+
+        /* 響應式：手機優先的固定底部導航 */
+        @media (min-width: 640px) {
+            .app-container { border: 1px solid #e5e5e5; }
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100">
 
-    <div class="bg-white p-8 sm:p-12 rounded-xl shadow-2xl w-full max-w-lg text-center">
-        <!-- 成功訊息區塊 -->
-        <div class="text-6xl mb-4 text-green-500">
-            ✅
-        </div>
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">
-            部署成功！
-        </h1>
-        <p class="text-lg text-gray-600 mb-6">
-            如果看到這個畫面，表示您的 GitHub Pages 部署設定是正確的。
-        </p>
-        <p class="text-sm text-gray-500 mt-6">
-            現在您可以將您的實際內容替換掉這個檔案了！
-        </p>
-        <div class="mt-8 pt-4 border-t border-gray-200">
-             <p class="text-xs text-gray-400">儲存庫名稱: H | 使用者: 95hh</p>
-        </div>
-    </div>
+<div id="app" class="app-container bg-white min-h-screen">
+    <!-- Header 標題欄 -->
+    <header class="sticky top-0 bg-white border-b border-gray-100 p-4 card-shadow z-10">
+        <h1 class="text-xl font-bold text-gray-800">哈爾濱之旅 ❄️</h1>
+        <p class="text-xs text-gray-500 mt-1">2025.12.26 - 2026.01.02</p>
+    </header>
+
+    <!-- 主內容區塊 (根據 Tab 切換) -->
+    <main id="content-container" class="p-4"></main>
+
+    <!-- 固定底部導航列 -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 z-20 mx-auto max-w-[600px]">
+        <button id="tab-itinerary" class="tab-button active flex flex-col items-center justify-center text-sm text-gray-800 transition duration-150 p-2">
+            <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
+            <span>行程概覽</span>
+        </button>
+        <button id="tab-info" class="tab-button flex flex-col items-center justify-center text-sm text-gray-500 hover:text-gray-800 transition duration-150 p-2">
+            <i data-lucide="plane" class="w-5 h-5 mb-0.5"></i>
+            <span>航班住宿</span>
+        </button>
+    </footer>
+</div>
+
+<script>
+    // --- 數據結構 (從 PDF 和網頁搜索結果整合) ---
+    const ITINERARY_DATA = [
+        { date: '12/26 (五)', events: [
+            { type: 'traffic', name: '前往桃園機場', location: '台灣桃園國際機場 T2', note: 'MF888 11:10', guide: '' },
+            { type: 'traffic', name: '抵達廈門高崎', location: '廈門高崎機場 (XMN)', note: '轉機停留', guide: '請注意國際轉國內的指示牌。' },
+            { type: 'stay', name: '入住廈門雲居飯店', location: '廈門雲居飯店 (同安區同集北路936號)', note: 'Check-in: 12/26', guide: '' },
+        ]},
+        { date: '12/27 (六)', events: [
+            { type: 'traffic', name: '飛往哈爾濱', location: '廈門高崎機場 T3', note: 'MF8079 07:40', guide: '提醒：哈爾濱太平機場代號 HRB。' },
+            { type: 'traffic', name: '抵達哈爾濱太平機場', location: '哈爾濱太平機場', note: '預計 12:05 落地，轉乘交通工具前往市區。' },
+            { type: 'attraction', name: '中央大街', location: '哈爾濱中央大街', note: '百年老街，俄式風情', guide: '必吃美食: <span class="text-red-600 font-bold">馬迭爾冰棒</span> (邊走邊吃才道地！), 鍋包肉, 大列巴。必買伴手禮: 俄羅斯套娃, 秋林格瓦斯。' },
+            { type: 'attraction', name: '聖·索菲亞大教堂', location: '聖·索菲亞大教堂', note: '遠東地區最大的東正教堂', guide: '攻略: 建議<span class="text-yellow-700 font-bold bg-yellow-100 rounded px-1">17:00-19:00藍調時刻</span>來拍攝，燈光與洋蔥頂穹頂最美。建築風格融合拜占庭，可入內參觀歷史壁畫。' },
+            { type: 'attraction', name: '防洪紀念塔', location: '哈爾濱防洪紀念塔', note: '位於中央大街盡頭，松花江畔', guide: '旁邊是松花江冰雪嘉年華 (免費)，可以玩冰爬犁、抽冰尜等傳統遊戲。' },
+            { type: 'stay', name: '入住哈爾濱譚閣美飯店', location: '哈爾濱譚閣美飯店 (南岗区湘江路135号)', note: 'Check-in: 12/27', guide: '' },
+        ]},
+        { date: '12/28 (日)', events: [
+            { type: 'traffic', name: '前往亞布力', location: '亞布力國際滑雪場', note: '搭乘專車或火車前往亞布力', guide: '車程較長，建議準備零食與熱飲。' },
+            { type: 'activity', name: '亞布力國際滑雪場', location: '亞布力國際滑雪場', note: '含初級滑雪3小時', guide: '攻略: 首次滑雪務必請教練，穿著厚襪、防風衣褲、護目鏡，並全身貼<span class="text-orange-600 font-bold">暖暖包</span>保暖。' },
+            { type: 'activity', name: '馬拉爬犁 & 土匪搶親', location: '亞布力景區內', note: '傳統雪地體驗項目', guide: '土匪搶親是東北特色表演，重在體驗互動氣氛。' },
+            { type: 'stay', name: '入住亞布力森林溫泉酒店', location: '亞布力森林溫泉酒店 (亞布力南站旁)', note: 'Check-in: 12/28', guide: '酒店有溫泉設施，滑雪後泡湯可緩解疲勞。' },
+        ]},
+        { date: '12/29 (一)', events: [
+            { type: 'traffic', name: '亞雪公路 - 雾凇長廊', location: '亞雪公路', note: '前往雪鄉的景觀道路', guide: '務必在霧凇長廊短暫停留拍照，景色非常壯觀！' },
+            { type: 'attraction', name: '雪鄉 - 雪韻大街', location: '海林雪鄉雙峰林場', note: '中國雪鄉，童話世界', guide: '必吃美食: <span class="text-red-600 font-bold">凍梨</span>、<span class="text-red-600 font-bold">凍柿子</span> (東北特色！)。' },
+            { type: 'attraction', name: '棒槌山棧道', location: '雪鄉棒槌山', note: '觀賞雪鄉全景與雪蘑菇', guide: '攻略: 棧道約3公里長，建議傍晚或清晨上山，可俯瞰**雪蘑菇**和夜景燈光。<span class="text-orange-600 font-bold">防滑鞋具必備</span>。' },
+            { type: 'activity', name: '雪鄉篝火晚會', location: '雪鄉廣場', note: '感受東北夜間氛圍', guide: '參與互動舞蹈，注意手機在低溫下可能耗電快，請貼上**暖暖包**。' },
+            { type: 'stay', name: '入住海林雪鄉添瑞民宿', location: '海林雪鄉添瑞民宿 (雪韵大街西07-2号)', note: 'Check-in: 12/29', guide: '體驗東北火炕，非常溫暖。' },
+        ]},
+        { date: '12/30 (二)', events: [
+            { type: 'traffic', name: '返回哈爾濱市區', location: '哈爾濱市區', note: '搭乘專車返回哈爾濱', guide: '車程約5-6小時，請提前準備好午餐。' },
+            { type: 'attraction', name: '松花江大橋', location: '松花江大橋', note: '遠眺松花江江景', guide: '冬季江面結冰，景色壯闊。' },
+            { type: 'food', name: '師大夜市 (晚餐/小吃)', location: '哈爾濱師範大學夜市', note: '哈爾濱在地夜市', guide: '必吃美食: 烤冷麵、鐵板魷魚等東北特色小吃。' },
+            { type: 'stay', name: '入住哈爾濱譚閣美飯店', location: '哈爾濱譚閣美飯店', note: '連住開始', guide: '' },
+        ]},
+        { date: '12/31 (三)', events: [
+            { type: 'food', name: '紅磚街早市', location: '紅磚街早市 (近中央大街)', note: '感受老哈爾濱的煙火氣', guide: '必吃美食: <span class="text-red-600 font-bold">尹胖子油炸糕</span>、<span class="text-red-600 font-bold">笨巧排骨包</span>、<span class="text-red-600 font-bold">霜糖油條</span>、<span class="text-red-600 font-bold">烤梨汁 (冬季限定)</span>。務必趁早 (7點前) 抵達！' },
+            { type: 'attraction', name: '音樂長廊', location: '斯大林公園一帶', note: '沿江散步', guide: '可在中央大街購買**紅腸**作為零食。' },
+            { type: 'activity', name: '冰雪大世界', location: '哈爾濱冰雪大世界', note: '跨年夜特別活動', guide: '攻略: <span class="text-yellow-700 font-bold bg-yellow-100 rounded px-1">超級大滑梯需提前預約！</span> 建議16:00入園，先排隊玩大滑梯，再等待燈光亮起。必玩：摩天輪、冰雪迷宮。' },
+            { type: 'stay', name: '入住哈爾濱譚閣美飯店', location: '哈爾濱譚閣美飯店', note: '連住', guide: '準備好迎接跨年倒數。' },
+        ]},
+        { date: '01/01 (四)', events: [
+            { type: 'traffic', name: '前往哈爾濱太平機場', location: '哈爾濱太平機場 T2', note: 'MF8080 13:15', guide: '提前至少2小時抵達機場辦理登機手續。' },
+            { type: 'traffic', name: '抵達廈門高崎', location: '廈門高崎機場 T3', note: '轉機停留', guide: '請確認隔日航班的登機時間與航廈。' },
+            { type: 'stay', name: '入住廈門雲居飯店', location: '廈門雲居飯店', note: 'Check-in: 1/1', guide: '' },
+        ]},
+        { date: '01/02 (五)', events: [
+            { type: 'traffic', name: '飛往台北松山', location: '廈門高崎機場 T3', note: 'MF881 17:10', guide: '松山機場代號 TSA。' },
+            { type: 'traffic', name: '抵達台北松山機場', location: '台北松山機場', note: '預計 18:45 落地', guide: '旅途結束，返抵溫暖的家。' },
+        ]},
+    ];
+
+    const INFO_DATA = {
+        flights: [
+            { type: 'outbound', date: '12/26 (五)', segments: [
+                { time: '11:10', from: 'TPE 台灣桃園 (T2)', to: 'XMN 廈門高崎', flight: 'MF888 廈門航空', note: '轉機停留' },
+                { time: '12/27 07:40', from: 'XMN 廈門高崎 (T3)', to: 'HRB 哈爾濱太平', flight: 'MF8079 廈門航空', highlight: '重要預約代號: ZB4L9P (假設)' }
+            ]},
+            { type: 'return', date: '1/1 (四)', segments: [
+                { time: '13:15', from: 'HRB 哈爾濱太平 (T2)', to: 'XMN 廈門高崎', flight: 'MF8080 廈門航空', note: '轉機停留' },
+                { time: '1/2 17:10', from: 'XMN 廈門高崎 (T3)', to: 'TSA 台北松山', flight: 'MF881 廈門航空' }
+            ]}
+        ],
+        luggage: "托運行李: 限重23公斤, 尺寸不得超過三邊總和158公分；手提行李: 限重5公斤, 尺寸不得超過三邊總和115公分。",
+        accommodations: [
+            { name: "廈門雲居飯店", location: "同安區同集北路936號", duration: "12/26, 1/1", reservation_code: "XYJ-108" },
+            { name: "哈爾濱譚閣美飯店", location: "南岗区湘江路135号", duration: "12/27, 12/30, 12/31", reservation_code: "HTG-305" },
+            { name: "亞布力森林溫泉酒店", location: "尚志亚布力旅游度假區亚布力南站旁", duration: "12/28" },
+            { name: "海林雪鄉添瑞民宿", location: "海林雪韵大街西07-2号", duration: "12/29" }
+        ],
+        souvenirs: '必買伴手禮: <span class="text-emerald-700 font-bold">哈爾濱紅腸</span> (秋林里道斯/哈肉聯), <span class="text-emerald-700 font-bold">大列巴</span> (秋林), <span class="text-emerald-700 font-bold">秋林格瓦斯</span>, 老鼎豐糕點, <span class="text-emerald-700 font-bold">俄羅斯酒糖</span>。'
+    };
+
+    // --- 工具函數 ---
+
+    // 根據類型返回對應的 Tailwind 樣式和 Lucide Icon
+    function getCardStyle(type) {
+        switch (type) {
+            case 'attraction': return { icon: 'map-pin', color: 'text-blue-600 bg-blue-50', border: 'border-blue-200' };
+            case 'food': return { icon: 'utensils', color: 'text-red-600 bg-red-50', border: 'border-red-200' };
+            case 'activity': return { icon: 'snowboarding', color: 'text-indigo-600 bg-indigo-50', border: 'border-indigo-200' };
+            case 'traffic': return { icon: 'bus', color: 'text-gray-600 bg-gray-50', border: 'border-gray-200' };
+            case 'stay': return { icon: 'home', color: 'text-emerald-600 bg-emerald-50', border: 'border-emerald-200' };
+            default: return { icon: 'bookmark', color: 'text-gray-600 bg-gray-50', border: 'border-gray-200' };
+        }
+    }
+
+    // 打開地圖導航
+    function openInMaps(location) {
+        // 嘗試打開 Google Maps 進行導航
+        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+        window.open(url, '_blank');
+    }
+
+    // 標籤切換邏輯
+    function switchTab(tabId) {
+        const container = document.getElementById('content-container');
+        const buttons = document.querySelectorAll('.tab-button');
+
+        buttons.forEach(btn => btn.classList.remove('active', 'text-gray-800'));
+        buttons.forEach(btn => btn.classList.add('text-gray-500', 'hover:text-gray-800'));
+
+        const activeBtn = document.getElementById(tabId);
+        activeBtn.classList.add('active', 'text-gray-800');
+        activeBtn.classList.remove('text-gray-500');
+
+        container.innerHTML = ''; // 清空內容
+
+        if (tabId === 'tab-itinerary') {
+            container.innerHTML = renderItinerary();
+        } else if (tabId === 'tab-info') {
+            container.innerHTML = renderInfo();
+        }
+        // 重新渲染 Lucide 圖標
+        lucide.createIcons();
+
+        // 將頁面滾動到頂部
+        document.getElementById('app').scrollTo(0, 0);
+    }
+
+    // --- 渲染函數 ---
+
+    function renderItinerary() {
+        let html = '';
+        ITINERARY_DATA.forEach((day, index) => {
+            // Day Header 日期標題 (日式簡約風格)
+            html += `
+                <div class="sticky top-[72px] bg-white pt-2 pb-1 z-5">
+                    <h2 class="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                        ${day.date} <span class="text-sm font-normal text-gray-500 ml-2">第 ${index + 1} 天</span>
+                    </h2>
+                </div>
+                <div class="mt-4 space-y-4 mb-8">
+            `;
+
+            day.events.forEach(event => {
+                const style = getCardStyle(event.type);
+                const hasGuide = event.guide && event.guide.length > 0;
+                const canNavigate = event.location && event.type !== 'traffic' && event.type !== 'stay';
+
+                html += `
+                    <div class="card-shadow p-4 rounded-lg border-l-4 ${style.border} ${style.bg} transition duration-300 hover:shadow-md">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="${style.icon}" class="w-5 h-5 ${style.color}"></i>
+                                <h3 class="text-base font-semibold text-gray-800">${event.name}</h3>
+                            </div>
+                            <span class="text-xs font-medium text-gray-500 border rounded-full px-2 py-0.5 capitalize">${event.type === 'attraction' ? '景點' : event.type === 'food' ? '美食' : event.type === 'activity' ? '活動' : event.type === 'traffic' ? '交通' : '住宿'}</span>
+                        </div>
+                        
+                        <p class="text-sm text-gray-600 mb-2">${event.location}</p>
+                        ${event.note ? `<p class="text-xs text-gray-500 italic mb-2">備註: ${event.note}</p>` : ''}
+                        
+                        <!-- 導遊職責/攻略資訊 -->
+                        ${hasGuide ? `
+                            <div class="mt-3 p-3 rounded-md bg-gray-50 border border-dashed border-gray-200">
+                                <p class="text-xs font-semibold text-gray-700 flex items-center mb-1">
+                                    <i data-lucide="sparkles" class="w-4 h-4 text-pink-500 mr-1"></i> 導遊建議
+                                </p>
+                                <p class="text-sm text-gray-700 leading-relaxed">${event.guide}</p>
+                            </div>
+                        ` : ''}
+
+                        <!-- 導航按鈕 -->
+                        ${canNavigate ? `
+                            <button onclick="openInMaps('${event.location}')" class="mt-3 w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
+                                <i data-lucide="compass" class="w-4 h-4 mr-1"></i> 前往導航
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        });
+        return html;
+    }
+
+    function renderInfo() {
+        let html = `
+            <div class="space-y-8">
+                <!-- 航班資訊 -->
+                <div class="p-4 rounded-lg border border-gray-200 card-shadow bg-white">
+                    <h2 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                        <i data-lucide="plane" class="w-5 h-5 mr-2 text-indigo-500"></i> 航班資訊
+                    </h2>
+                    
+                    ${INFO_DATA.flights.map(flight => `
+                        <div class="mb-4 p-3 bg-gray-50 rounded-md">
+                            <h3 class="font-semibold text-base mb-2 ${flight.type === 'outbound' ? 'text-blue-700' : 'text-purple-700'}">${flight.date} ${flight.type === 'outbound' ? '去程' : '回程'}</h3>
+                            <div class="space-y-3">
+                                ${flight.segments.map(s => `
+                                    <div class="text-sm border-b border-gray-200 pb-2 last:border-b-0 last:pb-0">
+                                        <p class="font-medium flex justify-between items-center mb-1">
+                                            <span>${s.from.split('(')[0]} ✈️ ${s.to.split('(')[0]}</span>
+                                            <span class="text-xs text-gray-500">${s.flight}</span>
+                                        </p>
+                                        <p class="text-gray-600 font-bold">${s.time}</p>
+                                        ${s.note ? `<p class="text-xs text-gray-500 italic">${s.note}</p>` : ''}
+                                        ${s.highlight ? `<p class="mt-1 text-xs guide-highlight bg-orange-100 text-orange-600 inline-block">${s.highlight}</p>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+
+                    <div class="mt-4 p-3 bg-gray-100 rounded-md text-sm">
+                        <h4 class="font-semibold text-gray-700 mb-1">行李限制提醒:</h4>
+                        <p class="text-gray-600 text-xs">${INFO_DATA.luggage}</p>
+                    </div>
+                </div>
+
+                <!-- 住宿資訊 -->
+                <div class="p-4 rounded-lg border border-gray-200 card-shadow bg-white">
+                    <h2 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                        <i data-lucide="bed" class="w-5 h-5 mr-2 text-emerald-500"></i> 住宿資訊
+                    </h2>
+                    ${INFO_DATA.accommodations.map(acc => `
+                        <div class="mb-4 p-3 bg-gray-50 rounded-md">
+                            <h3 class="font-semibold text-base text-gray-700 mb-1">${acc.name}</h3>
+                            <p class="text-sm text-gray-600 mb-1">期間: ${acc.duration}</p>
+                            <p class="text-xs text-gray-500 mb-2">地址: ${acc.location}</p>
+                            ${acc.reservation_code ? `<p class="mt-1 text-xs guide-highlight bg-orange-100 text-orange-600 inline-block">重要預約代號: ${acc.reservation_code}</p>` : ''}
+                            <button onclick="openInMaps('${acc.location}')" class="mt-2 text-xs text-indigo-500 hover:text-indigo-700 font-medium flex items-center">
+                                <i data-lucide="map" class="w-3 h-3 mr-1"></i> 查看地圖
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- 必買伴手禮 (額外導遊資訊區塊) -->
+                <div class="p-4 rounded-lg border border-gray-200 card-shadow bg-white mb-8">
+                    <h2 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                        <i data-lucide="gift" class="w-5 h-5 mr-2 text-pink-500"></i> 必買伴手禮 (導遊建議)
+                    </h2>
+                    <p class="text-sm text-gray-700 leading-relaxed">${INFO_DATA.souvenirs}</p>
+                </div>
+            </div>
+        `;
+        return html;
+    }
+
+    // --- 初始化 App ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // 初始渲染行程頁面
+        switchTab('tab-itinerary');
+
+        // 綁定底部導航按鈕事件
+        document.getElementById('tab-itinerary').addEventListener('click', () => switchTab('tab-itinerary'));
+        document.getElementById('tab-info').addEventListener('click', () => switchTab('tab-info'));
+
+        // 確保 Lucide 圖標在第一次渲染後被創建
+        lucide.createIcons();
+    });
+</script>
 
 </body>
 </html>
